@@ -1,0 +1,134 @@
+/*
+===============================================================================
+Stored Procedure: Load Bronze Layer (Source -> Bronze)
+===============================================================================
+Script Purpose:
+    This stored procedure loads data into the 'bronze' schema from external CSV files. 
+    It performs the following actions:
+    - Truncates the bronze tables before loading data.
+    - Uses the `COPY` command to load data from csv Files to bronze tables.
+
+Parameters:
+    None. 
+	  This stored procedure does not accept any parameters or return any values.
+
+Usage Example:
+    call bronze.load_bronze_tables();
+===============================================================================
+*/    
+
+
+CREATE OR REPLACE PROCEDURE bronze.load_bronze_tables()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	start_time TIMESTAMP;
+	end_time TIMESTAMP;
+	batch_start_time TIMESTAMP;
+	batch_end_time TIMESTAMP;
+BEGIN
+	-- start the batch processing timer
+	batch_start_time := clock_timestamp();
+	--loading message
+	RAISE NOTICE '===================================';
+    RAISE NOTICE ' Loading Bronze Layer ';
+    RAISE NOTICE '===================================';
+
+	RAISE NOTICE '===================================';
+	RAISE NOTICE ' Loading CRM Tables ';
+	RAISE NOTICE '===================================';
+	
+	BEGIN
+		--Loading CRM Tables
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.crm_cust_info  ';
+	    -- Truncate and Load crm_cust_info
+	    TRUNCATE TABLE bronze.crm_cust_info;
+		
+		-- copy csv files into the postgres sql
+		RAISE NOTICE '>> Inserting Data into: bronze.crm_cust_info  ';
+	    COPY bronze.crm_cust_info FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_crm/cust_info.csv'
+	    DELIMITER ',' CSV HEADER;
+		
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.crm_prd_info  ';
+	    TRUNCATE TABLE bronze.crm_prd_info;
+		
+		RAISE NOTICE '>> Inserting Data into: bronze.crm_prd_info  ';
+	    COPY bronze.crm_prd_info FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_crm/prd_info.csv'
+	    DELIMITER ',' CSV HEADER;
+
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.crm_sales_details  ';
+	    TRUNCATE TABLE bronze.crm_sales_details;
+	
+		RAISE NOTICE '>> Inserting Data into: bronze.crm_sales_details  ';
+	    COPY bronze.crm_sales_details FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_crm/sales_details.csv'
+	    DELIMITER ',' CSV HEADER;
+
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+	
+		RAISE NOTICE '===================================';
+	    RAISE NOTICE ' Loading CRM Tables ';
+	    RAISE NOTICE '===================================';
+	
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.erp_loc_a101  ';
+	    TRUNCATE TABLE bronze.erp_loc_a101;
+	
+		RAISE NOTICE '>> Inserting Data into: bronze.erp_loc_a101  ';
+	    COPY bronze.erp_loc_a101 FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_erp/LOC_A101.csv'
+	    DELIMITER ',' CSV HEADER;
+
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.erp_cust_az12  ';
+	    TRUNCATE TABLE bronze.erp_cust_az12;
+	
+		RAISE NOTICE '>> Inserting Data into: bronze.erp_cust_az12  ';
+	    COPY bronze.erp_cust_az12 FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_erp/CUST_AZ12.csv'
+	    DELIMITER ',' CSV HEADER;
+
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+
+		start_time := clock_timestamp();
+	    RAISE NOTICE '>> Truncating Table: bronze.erp_px_cat_g1v2  ';
+	    TRUNCATE TABLE bronze.erp_px_cat_g1v2;
+	
+		RAISE NOTICE '>> Inserting Data into: bronze.erp_px_cat_g1v2  ';
+	    COPY bronze.erp_px_cat_g1v2 FROM 'C:/MyProjetcs/sql-data-warehouse-project/datasets/source_erp/PX_CAT_G1V2.csv'
+	    DELIMITER ',' CSV HEADER;
+
+		end_time := clock_timestamp();
+		RAISE NOTICE '>> Load Duration: % seconds', EXTRACT(SECOND FROM end_time -start_time);
+
+	-- End of the batch processing
+	batch_end_time := clock_timestamp();
+	RAISE NOTICE '===========================================================================================';
+	RAISE NOTICE '>>The Total Load Duration: % seconds', EXTRACT(SECOND FROM batch_end_time - batch_start_time);
+	RAISE NOTICE '============================================================================================';
+	EXCEPTION
+		WHEN OTHERS THEN
+			RAISE NOTICE '===================================';
+		    RAISE NOTICE '   ERROR OCCURRED DURING LOADING   ';
+			RAISE NOTICE 'Error Message: %', SQLERRM;
+		    RAISE NOTICE '===================================';
+	END;
+    -- Print success message
+    RAISE NOTICE 'Data loading completed successfully 6 csv files to 6 postgres tables!';
+END;
+$$;
+
+-- The commad to execute the above procedure is 
+-- call bronze.load_bronze_tables();
+
